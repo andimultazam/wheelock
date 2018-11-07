@@ -15,10 +15,13 @@ from sklearn.metrics import confusion_matrix
 from sklearn.svm import LinearSVC
 from imblearn.over_sampling import SMOTE
 from imblearn.over_sampling import ADASYN
+from imblearn.combine import SMOTEENN
+from imblearn.combine import SMOTETomek
 from imblearn.pipeline import make_pipeline as make_pipeline_imb
 from imblearn.metrics import classification_report_imbalanced
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.linear_model import SGDClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.naive_bayes import MultinomialNB
 
@@ -114,8 +117,6 @@ for row in news['title']:
     temp.append(seq)
 news['title'] = temp
 
-news['title']
-
 # handle imblanced datasets
 X = news['title']
 y = news['category']
@@ -124,12 +125,10 @@ print('Training class distribution: {}'.format(Counter(y)))
 # y.value_counts().plot(kind='bar')
 
 # vectorize and resampling with SMOTE
-tfidf_vec = TfidfVectorizer(analyzer='word', ngram_range=(1, 2))
+tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1, 2))
 X_tfidf = tfidf_vec.fit_transform(X)
 X_s_tfidf = tfidf_vec.transform(prepareDatasets("Test_data/test_v2.csv"))
-print('Training: ', X_tfidf.shape)
-print('Test: ', X_s_tfidf.shape)
-ros = ADASYN(random_state=0)
+ros = SMOTEENN(random_state=0)
 X_resampled, y_resampled = ros.fit_resample(X_tfidf, y)
 print(sorted(Counter(y_resampled).items()))
 
@@ -138,6 +137,7 @@ X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled)
 print('Training class distribution: {}'.format(Counter(y_train)))
 
 # Build Model
+# clf = SVC(kernel='linear', C=1.0).fit(X_train, y_train)
 clf = LinearSVC().fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 print('accuracy: ', accuracy_score(y_pred, y_test))
@@ -154,7 +154,3 @@ y_submit = clf.predict(X_s_tfidf)
 # export to csv
 df = pd.DataFrame(data=y_submit)
 df.to_csv("Test_data/Submission.csv")
-
-
-10850*3000
-11000*3000
